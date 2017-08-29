@@ -8474,6 +8474,10 @@ module.exports = function normalizeComponent (
 //
 //
 //
+//
+//
+//
+//
 
 
 const W3CWebSocket = __webpack_require__(12).w3cwebsocket;
@@ -8481,14 +8485,16 @@ const W3CWebSocket = __webpack_require__(12).w3cwebsocket;
 /* harmony default export */ __webpack_exports__["a"] = ({
     data() {
         return {
-            client: null
+            client: null,
+            logs: ""
         };
     },
     methods: {
         connect() {
-            this.client = new W3CWebSocket('ws://127.0.0.1:8885');
+            this.client = new W3CWebSocket('ws://192.168.1.3:8885');
             this.client.onerror = function () {
                 console.log('connection error');
+                this.logs = "connection error";
             };
             this.client.onopen = function () {
                 console.log('websocket client connected');
@@ -8501,6 +8507,9 @@ const W3CWebSocket = __webpack_require__(12).w3cwebsocket;
                     console.log("close event", event);
                 };
             };
+        },
+        sendMsg() {
+            this.client.send("thick");
         }
     },
     mounted() {}
@@ -8567,11 +8576,15 @@ module.exports = {"_from":"websocket","_id":"websocket@1.0.24","_inBundle":false
 
 "use strict";
 var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
-  return _c('button', {
+  return _c('div', [_c('button', {
     on: {
       "click": _vm.connect
     }
-  }, [_vm._v("Connect")])
+  }, [_vm._v("Connect")]), _vm._v(" "), _c('button', {
+    on: {
+      "click": _vm.sendMsg
+    }
+  }, [_vm._v("send msg")]), _vm._v(" "), _c('p', [_vm._v(_vm._s(_vm.logs))])])
 }
 var staticRenderFns = []
 render._withStripped = true
