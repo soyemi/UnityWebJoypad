@@ -16,6 +16,10 @@ public class WebSocketServer {
     private TcpListener m_listener;
     private ClientManager m_clientManager;
 
+
+    public delegate void OnReceiveCallback(WebSocketServer server,string msg);
+    public event OnReceiveCallback eventOnReceive = delegate { };
+
     public WebSocketServer(string ipaddr,int port)
     {
         m_ipaddr = IPAddress.Parse(ipaddr);
@@ -32,7 +36,9 @@ public class WebSocketServer {
 
         Debug.Log("server start");
 
-        AccepterHelper acceptHelper = new AccepterHelper();
+        AccepterHelper acceptHelper = new AccepterHelper((msg)=> {
+            eventOnReceive.Invoke(this, msg);
+        });
         IAsyncResult result = m_listener.BeginAcceptSocket(new AsyncCallback(acceptHelper.AcceptClient), this);
     }
 
@@ -52,6 +58,12 @@ public class WebSocketServer {
 
     private class AccepterHelper
     {
+        private Action<string> m_callback;
+        public AccepterHelper(Action<string> callback)
+        {
+            m_callback = callback;
+        }
+
         public void AcceptClient(IAsyncResult ar)
         {
 
@@ -63,7 +75,7 @@ public class WebSocketServer {
             Socket client = m_listener.EndAcceptSocket(ar);
             Debug.Log("accept " + client.RemoteEndPoint.ToString());
 
-            ReceiveHelper receivehelper = new ReceiveHelper();
+            ReceiveHelper receivehelper = new ReceiveHelper(m_callback);
             client.BeginReceive(receivehelper.m_buffer, 0, 1024, 0, new AsyncCallback(receivehelper.ReceiveTarget), client);
             socketserver.m_clientManager.AddClient(client);
             m_listener.BeginAcceptSocket(new AsyncCallback(AcceptClient),socketserver);
@@ -73,6 +85,11 @@ public class WebSocketServer {
 
     private class ReceiveHelper
     {
+        private Action<string> m_onreceive = null;
+        public ReceiveHelper(Action<string> onreceive)
+        {
+            m_onreceive = onreceive;
+        }
 
         public byte[] m_buffer = new byte[1024];
         public void ReceiveTarget(IAsyncResult ar)
@@ -99,6 +116,7 @@ public class WebSocketServer {
                 {
                     string msg = DecodeMsg(m_buffer, read);
                     Debug.Log(">" + msg);
+                    m_onreceive.Invoke(msg);
                 }
 
                 client.BeginReceive(m_buffer, 0, m_buffer.Length, SocketFlags.None, new AsyncCallback(ReceiveTarget), client);
@@ -109,6 +127,7 @@ public class WebSocketServer {
 
             }
         }
+
 
 
         public static string DecodeMsg(Byte[] buffer, int len)

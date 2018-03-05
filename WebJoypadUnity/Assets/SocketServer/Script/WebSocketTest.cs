@@ -7,7 +7,7 @@ public class WebSocketTest : MonoBehaviour {
     private WebSocketServer m_Server;
 	// Use this for initialization
 	void Start () {
-        m_Server = new WebSocketServer("192.168.1.3", 8885);
+        m_Server = new WebSocketServer("0.0.0.0",8885);
         m_Server.Start();
 	}
 
